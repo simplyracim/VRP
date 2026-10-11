@@ -1,0 +1,35 @@
+# Build output
+build/
+build-*/
+cmake-build-*/
+out/
+
+# Packaging output (made by CI or by hand)
+dist/
+*.tar.gz
+*.zip
+
+# Compiled binaries
+app
+app.exe
+*.o
+*.obj
+*.a
+*.exe
+
+# CMake generated files (if you ever run cmake in the source dir)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Editors / IDEs
+.vscode/
+.idea/
+.cache/
+*.swp
+*~
+
+# OS junk
+.DS_Store
+Thumbs.db
