@@ -1,3 +1,0 @@
-/home/racim/FMB/Generic Project/build/CMakeFiles/app.dir
-/home/racim/FMB/Generic Project/build/CMakeFiles/edit_cache.dir
-/home/racim/FMB/Generic Project/build/CMakeFiles/rebuild_cache.dir

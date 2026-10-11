@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG -Wl,--dependency-file=CMakeFiles/app.dir/link.d CMakeFiles/app.dir/src/main.cpp.o CMakeFiles/app.dir/src/window.cpp.o CMakeFiles/app.dir/src/shader.cpp.o CMakeFiles/app.dir/src/mesh.cpp.o CMakeFiles/app.dir/external/glad/src/glad.c.o -o app  /usr/lib64/libglfw.so.3.4 -ldl
