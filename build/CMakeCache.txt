@@ -263,6 +263,12 @@ OPENGL_opengl_LIBRARY:FILEPATH=/usr/lib64/libOpenGL.so
 //Path to a file.
 OPENGL_xmesa_INCLUDE_DIR:PATH=OPENGL_xmesa_INCLUDE_DIR-NOTFOUND
 
+//Statically link the compiler runtime
+STATIC_RUNTIME:BOOL=OFF
+
+//Use GLFW installed on the system
+USE_SYSTEM_GLFW:BOOL=ON
+
 //The directory containing a CMake configuration file for glfw3.
 glfw3_DIR:PATH=/usr/lib64/cmake/glfw3
 

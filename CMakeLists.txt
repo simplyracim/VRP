@@ -1,24 +1,85 @@
-cmake_minimum_required(VERSION 3.20)
-
-project(GenericProject LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.18)
+project(GenericProject CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
+# Default to Release for single-config generators (Makefiles, Ninja)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
-add_executable(test
+# MSVC: link the C runtime statically (no VC++ Redistributable needed).
+# Must be set before any target is created, including GLFW.
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+# ---- GLFW ----
+# Local dev: use the system GLFW. CI/releases: pass -DUSE_SYSTEM_GLFW=OFF
+option(USE_SYSTEM_GLFW "Use GLFW installed on the system" ON)
+
+if(USE_SYSTEM_GLFW)
+    find_package(glfw3 3.3 REQUIRED)
+else()
+    include(FetchContent)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+    if(UNIX AND NOT APPLE)
+        # X11 only (runs on Wayland via XWayland); avoids extra build deps
+        set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
+    endif()
+    FetchContent_Declare(glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.4)
+    FetchContent_MakeAvailable(glfw)
+endif()
+
+# ---- Embed shaders ----
+set(SHADER_FILES vertex.glsl fragment.glsl)
+set(SHADER_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
+
+set(SHADER_CONTENT "#pragma once\nnamespace shaders {\n")
+foreach(f ${SHADER_FILES})
+    get_filename_component(name ${f} NAME_WE)
+    set(path ${CMAKE_SOURCE_DIR}/shaders/${f})
+    file(READ ${path} src)
+    string(APPEND SHADER_CONTENT
+        "inline constexpr const char* ${name} = R\"GLSL(${src})GLSL\";\n")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${path})
+endforeach()
+string(APPEND SHADER_CONTENT "}\n")
+
+file(CONFIGURE OUTPUT ${SHADER_GEN_DIR}/shaders_embedded.h
+     CONTENT "${SHADER_CONTENT}" @ONLY)
+
+# ---- Target ----
+add_executable(app
     src/main.cpp
+    src/window.cpp
+    src/shader.cpp
+    src/mesh.cpp
     external/glad/src/glad.c
 )
 
-target_include_directories(test PRIVATE
+target_include_directories(app PRIVATE
+    include
     external/glad/include
-    external/GLFW
+    ${SHADER_GEN_DIR}
 )
 
-target_link_libraries(test PRIVATE
-    glfw
-    OpenGL::GL
-)
+target_link_libraries(app PRIVATE glfw ${CMAKE_DL_LIBS})
+
+# ---- Portability: bundle compiler runtimes (releases only) ----
+option(STATIC_RUNTIME "Statically link the compiler runtime" OFF)
+
+if(STATIC_RUNTIME)
+    if(MINGW)
+        target_link_options(app PRIVATE -static -static-libgcc -static-libstdc++)
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND UNIX AND NOT APPLE)
+        target_link_options(app PRIVATE -static-libgcc -static-libstdc++)
+    endif()
+endif()
