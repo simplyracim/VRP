@@ -72,6 +72,7 @@ add_executable(app
     src/window.cpp
     src/shader.cpp
     src/mesh.cpp
+    src/ui.cpp
     external/glad/src/glad.c
 )
 
