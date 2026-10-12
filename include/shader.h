@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <glm/mat4x4.hpp>
 
 class Shader {
 public:
@@ -8,6 +9,7 @@ public:
     Shader(const Shader&) = delete;
     Shader& operator=(const Shader&) = delete;
 
+    void setMat4(const char* name, const glm::mat4& m) const;
     void use() const;
 
 private:

@@ -1,7 +1,7 @@
 #include "shader.h"
 #include <glad/glad.h>
 #include <stdexcept>
-
+#include <glm/gtc/type_ptr.hpp>
 
 static unsigned int compile(GLenum type, const char* src, const char* name) {
     unsigned int shader = glCreateShader(type);
@@ -43,3 +43,7 @@ Shader::Shader(const char* vertexSrc, const char* fragmentSrc) {
 
 Shader::~Shader() { glDeleteProgram(m_id); }
 void Shader::use() const { glUseProgram(m_id); }
+
+void Shader::setMat4(const char* name, const glm::mat4& m) const {
+    glUniformMatrix4fv(glGetUniformLocation(m_id, name), 1, GL_FALSE, glm::value_ptr(m));
+}

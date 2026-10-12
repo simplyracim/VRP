@@ -10,6 +10,8 @@ public:
     Window(const Window&) = delete;
     Window& operator=(const Window&) = delete;
 
+    double time() const;
+    void getFramebufferSize(int& w, int& h) const;
     bool shouldClose() const;
     void swapBuffers();
     void pollEvents();

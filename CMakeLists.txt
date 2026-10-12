@@ -15,6 +15,16 @@ if(MSVC)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
+# ---- GLM (header-only math library) ----
+find_package(glm QUIET)
+if(NOT glm_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.1)
+    FetchContent_MakeAvailable(glm)
+endif()
+
 # ---- GLFW ----
 # Local dev: use the system GLFW. CI/releases: pass -DUSE_SYSTEM_GLFW=OFF
 option(USE_SYSTEM_GLFW "Use GLFW installed on the system" ON)
@@ -71,7 +81,7 @@ target_include_directories(app PRIVATE
     ${SHADER_GEN_DIR}
 )
 
-target_link_libraries(app PRIVATE glfw ${CMAKE_DL_LIBS})
+target_link_libraries(app PRIVATE glfw glm::glm ${CMAKE_DL_LIBS})
 
 # ---- Portability: bundle compiler runtimes (releases only) ----
 option(STATIC_RUNTIME "Statically link the compiler runtime" OFF)

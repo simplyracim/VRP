@@ -31,6 +31,12 @@ Window::~Window() {
     glfwTerminate();
 }
 
+double Window::time() const { return glfwGetTime(); }
+
+void Window::getFramebufferSize(int& w, int& h) const {
+    glfwGetFramebufferSize(m_window, &w, &h);
+}
+
 bool Window::shouldClose() const { return glfwWindowShouldClose(m_window); }
 void Window::swapBuffers()       { glfwSwapBuffers(m_window); }
 void Window::pollEvents()        { glfwPollEvents(); }
