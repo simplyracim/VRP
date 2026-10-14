@@ -48,6 +48,28 @@ else()
     FetchContent_MakeAvailable(glfw)
 endif()
 
+# ---- Dear ImGui (fetched) ----
+include(FetchContent)
+FetchContent_Declare(imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG v1.91.9)
+FetchContent_MakeAvailable(imgui)
+
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/imgui_demo.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(imgui PUBLIC glfw ${CMAKE_DL_LIBS})
+
 # ---- Embed shaders ----
 set(SHADER_FILES vertex.glsl fragment.glsl)
 set(SHADER_GEN_DIR ${CMAKE_BINARY_DIR}/generated)
@@ -82,7 +104,7 @@ target_include_directories(app PRIVATE
     ${SHADER_GEN_DIR}
 )
 
-target_link_libraries(app PRIVATE glfw glm::glm ${CMAKE_DL_LIBS})
+target_link_libraries(app PRIVATE glm::glm imgui ${CMAKE_DL_LIBS})
 
 # ---- Portability: bundle compiler runtimes (releases only) ----
 option(STATIC_RUNTIME "Statically link the compiler runtime" OFF)
