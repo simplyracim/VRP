@@ -34,6 +34,11 @@ void UI::draw(UIState& s) {
     ImGui::Separator();
     ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
     ImGui::End();
+    ImGui::Separator();
+    ImGui::SliderInt("Nodes", &s.nodeCount, 3, 100);
+    ImGui::SliderFloat("Edge probability", &s.edgeProbability, 0.0f, 1.0f);
+    if (ImGui::Button("Randomize graph"))
+        s.randomizeRequested = true;
 }
 
 void UI::render() {

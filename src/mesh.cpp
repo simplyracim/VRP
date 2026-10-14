@@ -32,6 +32,11 @@ Mesh::~Mesh() {
     glDeleteVertexArrays(1, &m_vao);
 }
 
+void Mesh::drawInstanced(int instanceCount) const {
+    glBindVertexArray(m_vao);
+    glDrawElementsInstanced(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr, instanceCount);
+}
+
 void Mesh::draw() const {
     glBindVertexArray(m_vao);
     glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);

@@ -1,47 +1,36 @@
+#include <random>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "window.h"
-#include "shader.h"
-#include "mesh.h"
 #include "ui.h"
-#include "shaders_embedded.h"
+#include "graph/graph.h"
+#include "graph/layout.h"
+#include "graph/generators.h"
+#include "render/graph_renderer.h"
+#include <cmath>
 #include <iostream>
 
 int main() {
     try {
-        Window window(800, 600, "Rotating Cube");
-        UI ui(window.handle());          // declared after Window, so destroyed before it
-        Shader shader(shaders::vertex, shaders::fragment);
+        Window window(800, 600, "Graph Visualizer");
+        UI ui(window.handle());          // after Window: destroyed before it
+        GraphRenderer renderer;          // after Window: needs the GL context
 
-        // 6 faces x 4 vertices: x, y, z,  r, g, b
-        Mesh cube({
-            // front (red)
-            -0.5f,-0.5f, 0.5f,  1,0,0,   0.5f,-0.5f, 0.5f,  1,0,0,
-             0.5f, 0.5f, 0.5f,  1,0,0,  -0.5f, 0.5f, 0.5f,  1,0,0,
-            // back (green)
-             0.5f,-0.5f,-0.5f,  0,1,0,  -0.5f,-0.5f,-0.5f,  0,1,0,
-            -0.5f, 0.5f,-0.5f,  0,1,0,   0.5f, 0.5f,-0.5f,  0,1,0,
-            // right (blue)
-             0.5f,-0.5f, 0.5f,  0,0,1,   0.5f,-0.5f,-0.5f,  0,0,1,
-             0.5f, 0.5f,-0.5f,  0,0,1,   0.5f, 0.5f, 0.5f,  0,0,1,
-            // left (yellow)
-            -0.5f,-0.5f,-0.5f,  1,1,0,  -0.5f,-0.5f, 0.5f,  1,1,0,
-            -0.5f, 0.5f, 0.5f,  1,1,0,  -0.5f, 0.5f,-0.5f,  1,1,0,
-            // top (magenta)
-            -0.5f, 0.5f, 0.5f,  1,0,1,   0.5f, 0.5f, 0.5f,  1,0,1,
-             0.5f, 0.5f,-0.5f,  1,0,1,  -0.5f, 0.5f,-0.5f,  1,0,1,
-            // bottom (cyan)
-            -0.5f,-0.5f,-0.5f,  0,1,1,   0.5f,-0.5f,-0.5f,  0,1,1,
-             0.5f,-0.5f, 0.5f,  0,1,1,  -0.5f,-0.5f, 0.5f,  0,1,1,
-        }, {
-             0, 1, 2,  2, 3, 0,
-             4, 5, 6,  6, 7, 4,
-             8, 9,10, 10,11, 8,
-            12,13,14, 14,15,12,
-            16,17,18, 18,19,16,
-            20,21,22, 22,23,20,
-        });
+        const float fov = glm::radians(45.0f);
+
+        // --- build the graph and compute a 3D layout ---
+        Graph graph = makePetersen();    // try makeComplete(8), makeCycle(12), makeRandom(40, 0.08f)
+        float radius = 1.0f, distance = 3.0f;
+
+        // lay out the current graph and frame the camera around it
+        auto layoutAndFrame = [&]() {
+            randomizePositions(graph, 2.0f, std::random_device{}());
+            forceLayout(graph, 300);
+            radius = graph.boundingRadius();
+            distance = radius / std::sin(fov * 0.5f) * 1.1f;
+        };
+        layoutAndFrame();
 
         UIState state;
         glEnable(GL_DEPTH_TEST);
@@ -65,6 +54,14 @@ int main() {
             ui.beginFrame();
             ui.draw(state);
 
+            // --- handle "Randomize graph" ---
+            if (state.randomizeRequested) {
+                state.randomizeRequested = false;
+                graph = makeRandom(state.nodeCount, state.edgeProbability,
+                                   std::random_device{}());
+                layoutAndFrame();
+            }
+
             // --- apply state ---
             if (!state.paused) angle += dt * state.rotationSpeed;
 
@@ -77,18 +74,15 @@ int main() {
                          state.background[2], 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glm::mat4 model = glm::rotate(glm::mat4(1.0f), angle,
+            glm::mat4 world = glm::rotate(glm::mat4(1.0f), angle,
                                           glm::normalize(glm::vec3(0.5f, 1.0f, 0.0f)));
-            glm::mat4 view  = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -3));
-            glm::mat4 proj  = glm::perspective(glm::radians(45.0f),
-                                               static_cast<float>(w) / h, 0.1f, 100.0f);
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, -distance));
+            glm::mat4 proj = glm::perspective(fov, static_cast<float>(w) / h,
+                                              0.1f, distance + radius * 2.0f);
 
-            shader.use();
-            shader.setMat4("uMVP", proj * view * model);
-            cube.draw();
+            renderer.draw(graph, proj * view, world);
 
             // --- UI on top ---
-            // ImGui draws filled triangles, so make sure wireframe is off for it
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             ui.render();
 

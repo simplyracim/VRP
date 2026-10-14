@@ -9,6 +9,9 @@ struct UIState {
     bool  paused    = false;
     bool  wireframe = false;
     bool  cullFaces = true;
+    int   nodeCount       = 12;
+    float edgeProbability = 0.15f;
+    bool  randomizeRequested = false;   // set by the UI, cleared by main
 };
 
 class UI {

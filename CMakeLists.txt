@@ -95,6 +95,11 @@ add_executable(app
     src/shader.cpp
     src/mesh.cpp
     src/ui.cpp
+    src/graph/graph.cpp
+    src/graph/layout.cpp
+    src/graph/generators.cpp
+    src/render/primitives.cpp
+    src/render/graph_renderer.cpp
     external/glad/src/glad.c
 )
 
